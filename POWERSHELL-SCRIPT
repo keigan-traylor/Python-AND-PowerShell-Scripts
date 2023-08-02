@@ -1,0 +1,35 @@
+# Set the subnet and IP range to scan
+$subnet = "0.0.0.0"
+$start = 1
+$end = 254
+
+# Initialize variables to store alive IPs and recent IPs
+$aliveIPs = @()
+$recentIPs = @()
+
+# Ping each IP in the range to check if it's alive
+while ($start -le $end) {
+    $IP = "0.0.0.$start"
+    Write-Host "Pinging $IP" -ForegroundColor Cyan
+    if (Test-Connection -ComputerName $IP -count 1 -Quiet) {
+        $aliveIPs += $IP
+    }
+    $start++
+}
+
+# Get the event logs for the last 30 days
+$lastBootUpTime = (Get-EventLog -LogName System -ComputerName $subnet | Where-Object {$_.EventID -eq 6005} | Select-Object -First 1).TimeGenerated
+$eventLogs = Get-EventLog -LogName System -ComputerName $subnet -After $lastBootUpTime
+
+# Get the IPs that were alive within the last 30 days from the event logs
+$recentIPs = $eventLogs | Where-Object {$_.EventID -eq 6006} | ForEach-Object {
+    $_.ReplacementStrings[0]
+}
+
+# Combine the alive IPs and the recent IPs, sort them and remove duplicates
+$allIPs = $aliveIPs + $recentIPs | Sort-Object | Get-Unique
+
+# Output the result
+Write-Host "Alive IPs: $($aliveIPs -join ', ')" -ForegroundColor Green
+Write-Host "Recent IPs: $($recentIPs -join ', ')" -ForegroundColor Yellow
+Write-Host "All IPs: $($allIPs -join ', ')" -ForegroundColor White
