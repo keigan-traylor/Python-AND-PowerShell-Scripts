@@ -14,7 +14,7 @@ stream = video.streams.get_highest_resolution()
 suffix = url[-3:]
 
 # Download the video as a .mp4 file with the suffix
-stream.download(output_path="C:\\Users\\Keigan\\Desktop\\TEST LOGIC FOLDER", filename=f"video{suffix}.mp4")
+stream.download(output_path="C:\\Users\\", filename=f"video{suffix}.mp4")
 
 # Alternatively, download the video as a .mov file with the suffix
 # stream.download(output_path="C:\\Users\\Desktop", filename=f"video{suffix}.mov")
