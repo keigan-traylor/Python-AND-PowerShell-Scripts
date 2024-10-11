@@ -1,0 +1,53 @@
+import cv2
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report
+
+# Load dataset
+# Assuming you have a dataset with labeled images (signature, no_signature)
+data = pd.read_csv('path_to_dataset.csv')
+images = []  # List to hold image data
+labels = []  # List to hold corresponding labels
+
+for index, row in data.iterrows():
+    img = cv2.imread(row['image_path'], cv2.IMREAD_GRAYSCALE)
+    images.append(img)
+    labels.append(row['label'])
+
+# Preprocess images (resize, thresholding)
+processed_images = []
+for img in images:
+    resized_img = cv2.resize(img, (128, 128))  # Resize to uniform size
+    _, thresholded_img = cv2.threshold(resized_img, 127, 255, cv2.THRESH_BINARY)
+    processed_images.append(thresholded_img.flatten())
+
+# Convert lists to numpy arrays
+X = np.array(processed_images)
+y = np.array(labels)
+
+# Split data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train SVM classifier
+clf = SVC(kernel='linear')
+clf.fit(X_train, y_train)
+
+# Predict and evaluate
+y_pred = clf.predict(X_test)
+print(classification_report(y_test, y_pred))
+
+# Function to detect signature in new images
+def detect_signature(image_path):
+    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    resized_img = cv2.resize(img, (128, 128))
+    _, thresholded_img = cv2.threshold(resized_img, 127, 255, cv2.THRESH_BINARY)
+    features = thresholded_img.flatten().reshape(1, -1)
+    prediction = clf.predict(features)
+    return 'Signature detected' if prediction == 1 else 'No signature detected'
+
+# Example usage
+new_image_path = 'path_to_new_image.jpg'
+result = detect_signature(new_image_path)
+print(result)
